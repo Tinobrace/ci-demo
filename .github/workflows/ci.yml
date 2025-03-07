@@ -8,16 +8,34 @@ on:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, 3.10]  # Parallel testing on different versions
+
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
+      - name: Build Docker Image
+        run: docker build -t ci-demo .
+
+      - name: Run Tests in Docker
+        run: docker run ci-demo
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install Dependencies
         run: pip install -r requirements.txt
